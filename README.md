@@ -52,7 +52,15 @@ with tenant_scope(alice.id, "11111111-1111-4111-8111-111111111111"):
 # Without a scope, a ticket query returns no rows.
 ```
 
-The HTTP surface currently contains only `GET /health/`; it is not a ticket-management API or browser app. The domain and integration tests run without external accounts, customer data or paid services.
+## HTTP API
+
+```sh
+python manage.py runserver 127.0.0.1:8000 --noreload
+# In another shell with the same environment:
+python scripts/demo_api.py
+```
+
+The JSON API supports database-backed login/logout, current tenant discovery, ticket reads/creation/edits, comments and bounded tenant exports. Login and writes require CSRF protection; tenant membership and viewer/editor permissions are checked server-side. The loopback demo uses only the synthetic seed and verifies real HTTP cookie/CSRF behavior and denied access cases without creating domain records. See [API routes, inputs and limits](docs/API.md). No React interface is included yet. No external accounts, customer data or paid services are needed.
 
 ## Guarantees and limits
 
@@ -64,6 +72,6 @@ Custom database settings are **not authenticated identity**. A SQL-capable attac
 
 ## Verification
 
-The 32 integration tests use actual PostgreSQL, with no SQLite or mocked policy engine. They cover missing/forged context, tenant-specific roles, database-enforced write denials, cross-tenant relationships, transaction reuse/rollback, membership/user deactivation, unsafe role/configuration detection and deliberate privileged/context-impersonation negative controls. CI runs fresh setup on PostgreSQL 16 and 18. No HTTP authorization, browser, load or production-security evaluation is claimed here.
+The 58 tests include 34 database-boundary tests, 19 HTTP/session integration tests and five parser/rate-limit tests, with actual PostgreSQL and no SQLite or mocked policy engine. They cover missing/forged context, tenant-specific roles, database-enforced write denials, cross-tenant relationships, transaction reuse/rollback, membership/user deactivation, unsafe role/configuration detection and deliberate privileged/context-impersonation negative controls. The HTTP tests include 24 read and 18 write role/tenant matrix cases, session rotation/logout replay, CSRF, scoped exports and input limits. CI runs fresh setup and the real loopback HTTP demo on PostgreSQL 16 and 18. Browser, load and production-security evaluations are not claimed here.
 
 References: [OWASP multi-tenant security](https://cheatsheetseries.owasp.org/cheatsheets/Multi_Tenant_Security_Cheat_Sheet.html), [PostgreSQL RLS](https://www.postgresql.org/docs/current/ddl-rowsecurity.html), [Django transactions](https://docs.djangoproject.com/en/5.2/topics/db/transactions/).

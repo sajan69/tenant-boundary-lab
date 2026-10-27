@@ -35,5 +35,13 @@ jobs:
           set -a
           . ./.env.example
           set +a
+          python manage.py runserver 127.0.0.1:8765 --noreload > /tmp/boundary-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/demo_api.py --port 8765
+      - run: |
+          set -a
+          . ./.env.example
+          set +a
           python manage.py makemigrations --settings=boundary.migration_settings --check --dry-run
           python -m pip check

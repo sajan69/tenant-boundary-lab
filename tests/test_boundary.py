@@ -53,6 +53,15 @@ class BoundaryTests(unittest.TestCase):
         with privileged() as admin:
             with self.assertRaises(ImproperlyConfigured):verify_request_connection(admin)
 
+    def test_runtime_can_read_migration_metadata_for_server_startup(self):
+        from django.db.migrations.recorder import MigrationRecorder
+        applied=MigrationRecorder(connection).applied_migrations()
+        self.assertIn(('tickets','0003_runtime_migration_metadata'),applied)
+
+    def test_runtime_cannot_write_migration_metadata(self):
+        with self.assertRaises(DatabaseError):
+            with connection.cursor() as cursor:cursor.execute('DELETE FROM django_migrations')
+
     def test_absent_context_returns_no_tickets_or_comments(self):
         self.assertEqual(Ticket.objects.count(),0);self.assertEqual(Comment.objects.count(),0)
 
