@@ -1,0 +1,29 @@
+# Database and application boundaries
+
+## Identity and scope
+
+The internal `tenant_scope(user_id, tenant_id, write=False)` helper accepts a server-established user ID and a tenant selector. It does not authenticate its caller. It checks current active user/membership data, rejects an editor-required operation for a viewer, then uses parameterized `set_config(..., true)` calls inside a durable root transaction. `true` scopes settings to that transaction. It refuses nested scopes, manual transaction mode and an outer `atomic()` block; therefore it must not be combined with `ATOMIC_REQUESTS` or Django `TestCase`'s outer transaction. The integration tests use standard `unittest` with real connections.
+
+A request must obtain the user ID from authenticated server state, never a client-supplied body/header. Every query dependent on scope, including lazy ORM evaluation, must finish before leaving the context. Context clears on commit and rollback; tests reuse the same connection across tenants. The helper is not safe for a caller that can execute arbitrary SQL or supply another user's internal identity. One negative control deliberately sets context directly to demonstrate that limitation.
+
+The database policies independently recheck active membership and active user state. Under the default READ COMMITTED isolation level, a committed revocation is observed by a subsequent statement/request. A revocation is not retroactive and can race an already running statement; there is no claim of linearizable instantaneous revocation. No authorization cache or session-carried membership snapshot is used by the helper.
+
+## Role separation and grants
+
+`boundary_owner` owns the lab database, schema and migrated tables. It is a non-superuser/non-BYPASSRLS login used only through `boundary.migration_settings` for migrations and synthetic seed creation. `boundary_app` is the separate runtime login. Ordinary settings do not load owner credentials. Neither role is granted membership in another role. Bootstrap revokes public database access and schema privileges, then grants only schema usage/database connection to the request role.
+
+The request role can select organization/membership/user metadata for authorization and authentication, update only `auth_user.last_login`, and manage Django session rows. It can select/insert tickets and comments, and update only ticket title/status. It has no membership edits, tenant/creator reassignment, domain deletion, truncation or schema-creation grants. Metadata and sessions are not RLS-isolated tenant-domain tables; do not expose unfiltered metadata/session queries as application APIs.
+
+Both domain tables enable and force RLS. SELECT requires matching tenant context plus active user/membership. INSERT additionally requires editor membership and a creator/author matching context. Ticket UPDATE requires editor membership on existing and resulting rows. There are no domain DELETE policies. A composite `(tenant_id, ticket_id)` comment foreign key references `(tenant_id, id)` on tickets, independently preventing a local comment from referring to another tenant's ticket. Referential constraints can reveal limited existence information; RLS is not a general side-channel defense.
+
+The helper checks the deployed request role's name, dangerous attributes, role memberships, table ownership, schema/database creation privileges, and enabled/forced RLS flags. It does not attest that a privileged administrator has left every policy/grant unchanged. Integration tests exercise actual policies; administrators and migration code remain trusted. A runtime role cannot alter the policies. Do not run the server with migration settings.
+
+## Negative controls and operational limits
+
+Tests verify that a superuser sees rows without tenant context while the request role sees none. They also demonstrate that a SQL-capable request connection can set another valid user's context. These controls constrain the claimed boundary: protection against missing tenant filters and ordinary authorization mistakes, not a compromised application, SQL injection, malicious migrations, database administrator or hostile backup/restore path.
+
+The bootstrap creates only fixed lab resources on a loopback database and refuses existing names. Role/database creation cannot be one atomic transaction in PostgreSQL; interruption can leave a partial bootstrap. Inspect that disposable instance before retrying; the script never drops existing resources. The synthetic seed itself is transactional and refuses existing users/organizations. The integration suite changes policy flags and synthetic identity state temporarily and restores them; it is intended only for a fresh disposable lab, not concurrent application use.
+
+Django debug output is disabled. Local settings accept loopback hosts and use HTTP-compatible cookies; there is no production TLS/deployment profile. The health response exposes no database/user detail. There is no ticket HTTP API in this version, and no claim about HTTP authorization, CSRF behavior of future endpoints, browser safety or external tenant data.
+
+Primary guidance checked 27 October 2026: [OWASP tenant identity and transaction scope](https://cheatsheetseries.owasp.org/cheatsheets/Multi_Tenant_Security_Cheat_Sheet.html), [PostgreSQL row-security exceptions](https://www.postgresql.org/docs/current/ddl-rowsecurity.html), [transaction-local settings](https://www.postgresql.org/docs/current/functions-admin.html), [Django root transactions](https://docs.djangoproject.com/en/5.2/topics/db/transactions/) and [supported Django releases](https://www.djangoproject.com/download/). The pinned 5.2.18 LTS line remains supported; it is not described as the latest feature release.

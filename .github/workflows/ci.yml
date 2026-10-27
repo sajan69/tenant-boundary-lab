@@ -1,0 +1,39 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        postgres: ['16', '18']
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres }}
+        env:
+          POSTGRES_PASSWORD: local_admin_dummy_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt
+      - run: |
+          set -a
+          . ./.env.example
+          set +a
+          bash scripts/verify.sh
+      - run: |
+          set -a
+          . ./.env.example
+          set +a
+          python manage.py makemigrations --settings=boundary.migration_settings --check --dry-run
+          python -m pip check
