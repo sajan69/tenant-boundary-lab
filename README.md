@@ -60,7 +60,19 @@ python manage.py runserver 127.0.0.1:8000 --noreload
 python scripts/demo_api.py
 ```
 
-The JSON API supports database-backed login/logout, current tenant discovery, ticket reads/creation/edits, comments and bounded tenant exports. Login and writes require CSRF protection; tenant membership and viewer/editor permissions are checked server-side. The loopback demo uses only the synthetic seed and verifies real HTTP cookie/CSRF behavior and denied access cases without creating domain records. See [API routes, inputs and limits](docs/API.md). No React interface is included yet. No external accounts, customer data or paid services are needed.
+The JSON API supports database-backed login/logout, current tenant discovery, ticket reads/creation/edits, comments and bounded tenant exports. Login and writes require CSRF protection; tenant membership and viewer/editor permissions are checked server-side. The loopback demo uses only the synthetic seed and verifies real HTTP cookie/CSRF behavior and denied access cases without creating domain records. See [API routes, inputs and limits](docs/API.md). The React workspace adds organization selection, role-aware ticket editing, conversations and JSON downloads. No external accounts, customer data or paid services are needed.
+
+## Browser workspace
+
+With the API still running on `127.0.0.1:8000`, use Node.js 24.22+ (24 LTS):
+
+```sh
+npm ci --prefix frontend --ignore-scripts
+npm run build --prefix frontend
+npm run preview --prefix frontend
+```
+
+Open `http://127.0.0.1:4173/` and sign in with a seeded account. The client proxies only the local API, preserving Host/Origin so session and CSRF checks stay enabled. It clears records on organization changes, sign-out and access denial, and ignores obsolete responses. See [client setup and boundaries](docs/WEB_CLIENT.md) for development mode, browser checks and limitations.
 
 ## Guarantees and limits
 
@@ -72,6 +84,6 @@ Custom database settings are **not authenticated identity**. A SQL-capable attac
 
 ## Verification
 
-The 58 tests include 34 database-boundary tests, 19 HTTP/session integration tests and five parser/rate-limit tests, with actual PostgreSQL and no SQLite or mocked policy engine. They cover missing/forged context, tenant-specific roles, database-enforced write denials, cross-tenant relationships, transaction reuse/rollback, membership/user deactivation, unsafe role/configuration detection and deliberate privileged/context-impersonation negative controls. The HTTP tests include 24 read and 18 write role/tenant matrix cases, session rotation/logout replay, CSRF, scoped exports and input limits. CI runs fresh setup and the real loopback HTTP demo on PostgreSQL 16 and 18. Browser, load and production-security evaluations are not claimed here.
+The 58 tests include 34 database-boundary tests, 19 HTTP/session integration tests and five parser/rate-limit tests, with actual PostgreSQL and no SQLite or mocked policy engine. They cover missing/forged context, tenant-specific roles, database-enforced write denials, cross-tenant relationships, transaction reuse/rollback, membership/user deactivation, unsafe role/configuration detection and deliberate privileged/context-impersonation negative controls. The HTTP tests include 24 read and 18 write role/tenant matrix cases, session rotation/logout replay, CSRF, scoped exports and input limits. CI runs fresh setup and the real loopback HTTP demo on PostgreSQL 16 and 18. The PostgreSQL 18 job also builds React and runs Chromium against the real API, checking role-specific workflows, tenant-switch races, revocation, downloads, inert HTML labels and mobile layout. Screenshots and the browser case report are CI artifacts. No load or production-security evaluation is claimed here.
 
 References: [OWASP multi-tenant security](https://cheatsheetseries.owasp.org/cheatsheets/Multi_Tenant_Security_Cheat_Sheet.html), [PostgreSQL RLS](https://www.postgresql.org/docs/current/ddl-rowsecurity.html), [Django transactions](https://docs.djangoproject.com/en/5.2/topics/db/transactions/).

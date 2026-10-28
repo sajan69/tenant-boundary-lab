@@ -40,7 +40,7 @@ function fixture(...args){execFileSync(process.env.PYTHON_EXECUTABLE||'python',[
    const pending=page.waitForResponse(response=>response.url().endsWith(`/api/tenants/${B}/tickets/`)&&response.request().method()==='POST');
    await page.getByRole('button',{name:'Create ticket',exact:true}).click();const response=await pending;assert.equal(response.status(),201);created=(await response.json()).ticket.id;
    await page.getByRole('heading',{name:payload,exact:true}).waitFor();assert.equal(await page.locator('img').count(),0);
-   await page.getByLabel('Ticket status',{exact:true}).selectOption('closed');await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.locator('.detail .notice').filter({hasText:'Changes saved.'}).waitFor();assert.equal(await page.locator('.detail-heading .badge').innerText(),'closed');
+   await page.getByLabel('Ticket status',{exact:true}).selectOption('closed');await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.locator('.detail .notice').filter({hasText:'Changes saved.'}).waitFor();assert.equal(await page.locator('.detail-heading .badge').textContent(),'closed');
    await page.getByLabel('Add a comment',{exact:true}).fill('Hello\n<script>alert(1)</script>');await page.getByRole('button',{name:'Post comment',exact:true}).click();await page.locator('.comments p').filter({hasText:'<script>alert(1)</script>'}).waitFor();assert.equal(await page.locator('img').count(),0);
   });
   await check('status filters and editor export preserve scope',async()=>{
