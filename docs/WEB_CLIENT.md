@@ -1,6 +1,6 @@
 # Browser client
 
-The React workspace supports login/logout, organization selection, ticket filtering/pagination, detail/edit forms, comments and JSON downloads. Viewer controls are read-only; editor controls follow the selected organization's role. The API remains authoritative even when a caller bypasses the interface or a membership changes.
+The React workspace supports login/logout, organization selection, ticket filtering/pagination, detail/edit forms, comments and JSON downloads. Viewer controls are read-only; editor controls follow the selected organization's role. The API remains authoritative even when a caller bypasses the interface or a membership changes. Status filters and pagination affect the visible list; JSON downloads contain the full bounded selected-tenant report, including records outside that visible filter/page.
 
 ## Run the built client
 

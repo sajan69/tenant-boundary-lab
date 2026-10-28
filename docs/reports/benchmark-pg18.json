@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "source": "synthetic_disposable_lab",
+  "workload": {
+    "generated_tickets_per_tenant": 100,
+    "generated_ticket_count": 200,
+    "total_tickets": 202,
+    "total_comments": 1,
+    "tenants": 2,
+    "generated_fixture_sha256": "1321c5ff750d73cd90593aa91c5e1e5569fadbf931a985b86f482f2e01b2ba91",
+    "base_seed_projection_sha256": "d7be6f8d997fe6f135d8a58096f55519c3ca09d90c8b819ccfcb9883842c0ad2",
+    "repeats": 3,
+    "requests_per_operation_per_repeat": 10,
+    "measured_requests": 120,
+    "list_page_limit": 100,
+    "client_concurrency": 1
+  },
+  "method": {
+    "timer": "time.perf_counter wall milliseconds",
+    "transport": "IPv4 loopback HTTP; Connection: close; Python urllib; Django development server",
+    "included": "request construction, HTTP, authentication/session lookup, database connection/queries/RLS, serialization, response read and client JSON decoding",
+    "excluded": "fixture insertion/cleanup, login/logout/password hashing, correctness assertions, TLS, cloud network, Vite/React/browser rendering",
+    "order": "round-robin list/detail/export/denial; no dedicated warmup or cache reset; setup HTTP smoke and authentication precede timing",
+    "aggregate": "median of all raw samples per operation; no baseline comparison"
+  },
+  "environment": {
+    "python": "3.12.15",
+    "django": "5.2.18",
+    "psycopg": "3.3.6",
+    "postgresql": "18.6 (Debian 18.6-1.pgdg13+2)",
+    "recorded_at_utc": "2026-10-28T07:03:17.273833+00:00",
+    "run_url": "https://github.com/sajan69/tenant-boundary-lab/actions/runs/40647553682",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "logical_cpus_reported": 4,
+    "code_revision": "01ca9fc47b112a53bfcd33dc6bf9df66d1e90cf6"
+  },
+  "results": [
+    {
+      "repeat": 1,
+      "samples_ms": {
+        "list": [
+          21.296,
+          20.784,
+          22.128,
+          20.544,
+          20.132,
+          20.693,
+          21.04,
+          20.564,
+          20.286,
+          24.298
+        ],
+        "detail": [
+          18.865,
+          18.196,
+          20.354,
+          18.53,
+          19.375,
+          19.093,
+          18.479,
+          19.291,
+          18.086,
+          23.032
+        ],
+        "export": [
+          21.846,
+          24.784,
+          23.287,
+          21.828,
+          22.087,
+          21.831,
+          21.62,
+          21.717,
+          21.335,
+          25.073
+        ],
+        "cross_tenant_denial": [
+          16.59,
+          17.692,
+          17.603,
+          16.377,
+          16.742,
+          16.25,
+          16.577,
+          15.766,
+          16.054,
+          19.339
+        ]
+      },
+      "median_ms": {
+        "list": 20.738500000000002,
+        "detail": 18.979,
+        "export": 21.8385,
+        "cross_tenant_denial": 16.5835
+      }
+    },
+    {
+      "repeat": 2,
+      "samples_ms": {
+        "list": [
+          20.356,
+          21.038,
+          20.198,
+          20.553,
+          20.563,
+          19.783,
+          20.014,
+          19.69,
+          20.112,
+          20.21
+        ],
+        "detail": [
+          18.749,
+          18.281,
+          18.225,
+          18.225,
+          18.77,
+          18.039,
+          18.093,
+          18.23,
+          18.254,
+          18.558
+        ],
+        "export": [
+          22.464,
+          22.143,
+          21.233,
+          21.81,
+          21.689,
+          21.508,
+          21.221,
+          21.515,
+          21.765,
+          22.146
+        ],
+        "cross_tenant_denial": [
+          16.477,
+          16.465,
+          16.515,
+          16.23,
+          15.947,
+          16.105,
+          16.344,
+          16.362,
+          16.34,
+          16.977
+        ]
+      },
+      "median_ms": {
+        "list": 20.204,
+        "detail": 18.242,
+        "export": 21.727,
+        "cross_tenant_denial": 16.353
+      }
+    },
+    {
+      "repeat": 3,
+      "samples_ms": {
+        "list": [
+          21.845,
+          21.253,
+          20.729,
+          20.034,
+          21.205,
+          20.668,
+          20.377,
+          20.707,
+          21.016,
+          21.193
+        ],
+        "detail": [
+          20.434,
+          19.534,
+          19.07,
+          18.827,
+          19.054,
+          18.506,
+          18.299,
+          19.039,
+          19.766,
+          18.198
+        ],
+        "export": [
+          23.758,
+          24.367,
+          22.391,
+          22.192,
+          23.014,
+          22.338,
+          21.498,
+          22.422,
+          22.755,
+          22.556
+        ],
+        "cross_tenant_denial": [
+          17.611,
+          16.481,
+          16.573,
+          16.968,
+          16.469,
+          16.88,
+          17.072,
+          17.12,
+          16.554,
+          16.224
+        ]
+      },
+      "median_ms": {
+        "list": 20.8725,
+        "detail": 19.0465,
+        "export": 22.489,
+        "cross_tenant_denial": 16.7265
+      }
+    }
+  ],
+  "median_ms": {
+    "list": 20.616,
+    "detail": 18.6535,
+    "export": 22.115000000000002,
+    "cross_tenant_denial": 16.498
+  },
+  "cleanup_verified": true,
+  "limitations": [
+    "Single-client synthetic lab; not production throughput, load capacity or a comparative performance improvement.",
+    "Shared host, development server, caches and storage affect timings; no controlled-hardware guarantee.",
+    "Hash of generated rows is deterministic; base seed creation timestamps depend on setup."
+  ]
+}
+
