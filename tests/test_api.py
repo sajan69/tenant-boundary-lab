@@ -107,14 +107,20 @@ class ApiTests(unittest.TestCase):
         for user,tenant,ticket,allowed in cases:
             client=self.client(user)
             for path in (collection(tenant),detail(tenant,ticket),comments(tenant,ticket),export(tenant)):
-                with self.subTest(user=user,path=path):self.assertEqual(self.call(client,'GET',path).status_code,200 if allowed else 403)
+                with self.subTest(user=user,path=path):
+                    actual=self.call(client,'GET',path).status_code;expected=200 if allowed else 403
+                    if hasattr(self,'matrix_records'):self.matrix_records.append({'user':user,'tenant':str(tenant),'method':'GET','path':path,'expected':expected,'actual':actual})
+                    self.assertEqual(actual,expected)
 
     def test_write_permission_matrix_covers_editors_viewers_and_nonmembers(self):
         cases=[('alice',A,TA,True),('alice',B,TB,False),('bob',A,TA,False),('bob',B,TB,False),('sam',A,TA,False),('sam',B,TB,True)]
         for user,tenant,ticket,allowed in cases:
             client=self.client(user)
             for method,path,data,success in [('POST',collection(tenant),{'title':'Matrix probe'},201),('PATCH',detail(tenant,ticket),{'title':'Matrix probe'},200),('POST',comments(tenant,ticket),{'body':'Matrix probe'},201)]:
-                with self.subTest(user=user,path=path):self.assertEqual(self.call(client,method,path,data).status_code,success if allowed else 403)
+                with self.subTest(user=user,path=path):
+                    actual=self.call(client,method,path,data).status_code;expected=success if allowed else 403
+                    if hasattr(self,'matrix_records'):self.matrix_records.append({'user':user,'tenant':str(tenant),'method':method,'path':path,'expected':expected,'actual':actual})
+                    self.assertEqual(actual,expected)
 
     def test_anonymous_domain_endpoints_require_authentication(self):
         client=self.client()

@@ -45,6 +45,23 @@ jobs:
           set +a
           python manage.py makemigrations --settings=boundary.migration_settings --check --dry-run
           python -m pip check
+      - name: Record permission matrix and bounded API measurements
+        run: |
+          set -a
+          . ./.env.example
+          set +a
+          mkdir -p artifacts
+          python scripts/evaluate.py --disposable-lab | tee artifacts/evaluation.json
+          python manage.py runserver 127.0.0.1:8766 --noreload > /tmp/boundary-measurement.log 2>&1 &
+          measurement_pid=$!
+          trap 'kill "$measurement_pid" 2>/dev/null || true' EXIT
+          python scripts/demo_api.py --port 8766 > /dev/null
+          python scripts/benchmark_api.py --disposable-lab --port 8766 | tee artifacts/benchmark.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tenant-evidence-pg${{ matrix.postgres }}
+          path: artifacts/*.json
       - uses: actions/setup-node@v4
         if: matrix.postgres == '18'
         with:
@@ -63,7 +80,7 @@ jobs:
           set +a
           python manage.py runserver 127.0.0.1:8000 --noreload > /tmp/boundary-browser-api.log 2>&1 &
           api_pid=$!
-          npm run preview --prefix frontend > /tmp/boundary-browser-client.log 2>&1 &
+          (cd frontend && exec node node_modules/vite/bin/vite.js preview) > /tmp/boundary-browser-client.log 2>&1 &
           client_pid=$!
           trap 'kill "$api_pid" "$client_pid" 2>/dev/null || true' EXIT
           npm run test:browser --prefix frontend

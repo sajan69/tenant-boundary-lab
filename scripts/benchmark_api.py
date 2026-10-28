@@ -73,12 +73,12 @@ class Client:
 
 def verify(name,value,own_ids,total):
     if name=='list':
-        if len(value['items'])!=min(100,total) or any(row['tenant_id']!=str(A) or row['id'] not in own_ids for row in value['items']):raise ValueError('list_scope_or_count_mismatch')
+        if len(value['items'])!=min(100,total) or len({row['id'] for row in value['items']})!=len(value['items']) or any(row['tenant_id']!=str(A) or row['id'] not in own_ids for row in value['items']):raise ValueError('list_scope_or_count_mismatch')
         if value['has_more']!=(total>100):raise ValueError('pagination_mismatch')
     elif name=='detail':
         if value['ticket']['id']!=str(TA) or value['ticket']['tenant_id']!=str(A):raise ValueError('detail_scope_mismatch')
     elif name=='export':
-        if value['tenant_id']!=str(A) or {row['id'] for row in value['tickets']}!=own_ids:raise ValueError('export_scope_or_count_mismatch')
+        if value['tenant_id']!=str(A) or len(value['tickets'])!=total or {row['id'] for row in value['tickets']}!=own_ids:raise ValueError('export_scope_or_count_mismatch')
         if [row['id'] for row in value['comments']]!=[str(CA)]:raise ValueError('export_comment_mismatch')
     elif value!={'error':'tenant_access_denied'}:raise ValueError('denial_mismatch')
 
