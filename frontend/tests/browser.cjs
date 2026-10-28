@@ -40,12 +40,12 @@ function fixture(...args){execFileSync(process.env.PYTHON_EXECUTABLE||'python',[
    const pending=page.waitForResponse(response=>response.url().endsWith(`/api/tenants/${B}/tickets/`)&&response.request().method()==='POST');
    await page.getByRole('button',{name:'Create ticket',exact:true}).click();const response=await pending;assert.equal(response.status(),201);created=(await response.json()).ticket.id;
    await page.getByRole('heading',{name:payload,exact:true}).waitFor();assert.equal(await page.locator('img').count(),0);
-   await page.getByLabel('Ticket status',{exact:true}).selectOption('closed');await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.locator('.detail .notice').filter({hasText:'Changes saved.'}).waitFor();assert.equal(await page.locator('.detail-heading .badge').textContent(),'closed');
+   await page.getByRole('combobox',{name:'Ticket status',exact:true}).selectOption('closed');await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.locator('.detail .notice').filter({hasText:'Changes saved.'}).waitFor();assert.equal(await page.locator('.detail-heading .badge').textContent(),'closed');
    await page.getByLabel('Add a comment',{exact:true}).fill('Hello\n<script>alert(1)</script>');await page.getByRole('button',{name:'Post comment',exact:true}).click();await page.locator('.comments p').filter({hasText:'<script>alert(1)</script>'}).waitFor();assert.equal(await page.locator('img').count(),0);
   });
   await check('status filters and editor export preserve scope',async()=>{
-   await page.getByLabel('Status filter',{exact:true}).selectOption('closed');await page.locator('.ticket-row').filter({hasText:payload}).waitFor();
-   await page.getByLabel('Status filter',{exact:true}).selectOption('open');await page.locator('.ticket-row').filter({hasText:'Synthetic Harbor request'}).waitFor();assert.equal(await page.locator('.ticket-row').filter({hasText:payload}).count(),0);
+   await page.getByRole('combobox',{name:'Status filter',exact:true}).selectOption('closed');await page.locator('.ticket-row').filter({hasText:payload}).waitFor();
+   await page.getByRole('combobox',{name:'Status filter',exact:true}).selectOption('open');await page.locator('.ticket-row').filter({hasText:'Synthetic Harbor request'}).waitFor();assert.equal(await page.locator('.ticket-row').filter({hasText:payload}).count(),0);
    const report=await download();assert.equal(report.tenant_id,B);assert.ok(report.tickets.every(ticket=>ticket.tenant_id===B));assert.ok(report.tickets.some(ticket=>ticket.id===created));
   });
   await check('revocation clears visible records and refreshes membership',async()=>{
@@ -67,5 +67,5 @@ function fixture(...args){execFileSync(process.env.PYTHON_EXECUTABLE||'python',[
    assert.deepEqual(await page.evaluate(()=>({local:localStorage.length,session:sessionStorage.length})),{local:0,session:0});const response=await context.request.get('http://127.0.0.1:4173/');assert.match(response.headers()['content-security-policy'],/frame-ancestors 'none'/);
   });
   assert.deepEqual(failures,[]);await fs.writeFile(path.join(root,'artifacts/browser-checks.json'),JSON.stringify({source:'synthetic_seed',backend:'real Django and PostgreSQL',client:'built React through loopback Vite preview',checks,limitations:'Functional lab cases, not an exhaustive security assessment.'},null,2));
- }finally{try{fixture('restore');if(created)fixture('cleanup',created);fixture('check');}finally{await browser.close();}}
+ }catch(error){await fs.mkdir(path.join(root,'artifacts'),{recursive:true});await page.screenshot({path:path.join(root,'artifacts/tenant-failure.png'),fullPage:true}).catch(()=>{});await fs.writeFile(path.join(root,'artifacts/browser-partial.json'),JSON.stringify({failed:true,checks},null,2));throw error;}finally{try{fixture('restore');if(created)fixture('cleanup',created);fixture('check');}finally{await browser.close();}}
 })().catch(error=>{console.error(error);process.exitCode=1});
