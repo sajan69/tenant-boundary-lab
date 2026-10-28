@@ -45,3 +45,30 @@ jobs:
           set +a
           python manage.py makemigrations --settings=boundary.migration_settings --check --dry-run
           python -m pip check
+      - uses: actions/setup-node@v4
+        if: matrix.postgres == '18'
+        with:
+          node-version: '24'
+      - name: Build React client and install Chromium
+        if: matrix.postgres == '18'
+        run: |
+          npm ci --prefix frontend --ignore-scripts
+          npm run build --prefix frontend
+          npx --prefix frontend playwright install --with-deps chromium
+      - name: Verify built React against Django and PostgreSQL
+        if: matrix.postgres == '18'
+        run: |
+          set -a
+          . ./.env.example
+          set +a
+          python manage.py runserver 127.0.0.1:8000 --noreload > /tmp/boundary-browser-api.log 2>&1 &
+          api_pid=$!
+          npm run preview --prefix frontend > /tmp/boundary-browser-client.log 2>&1 &
+          client_pid=$!
+          trap 'kill "$api_pid" "$client_pid" 2>/dev/null || true' EXIT
+          npm run test:browser --prefix frontend
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.postgres == '18'
+        with:
+          name: tenant-browser
+          path: artifacts/
